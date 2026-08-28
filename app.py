@@ -276,15 +276,71 @@ def staff():
 @app.post("/staff/member/<int:member_id>/stamp")
 @require_role("staff","admin")
 def add_stamp(member_id):
-    m=fetchone("SELECT * FROM members WHERE id=?", (member_id,))
-    if not m: return "Not found",404
-    if m["stamps"]>=STAMP_GOAL:
-        flash("Υπάρχει ήδη διαθέσιμο δώρο. Κάνε πρώτα εξαργύρωση.","error")
-        return redirect(url_for("staff",q=m["member_code"]))
-    conn=connect(); execute(conn,"UPDATE members SET stamps=stamps+1 WHERE id=?",(member_id,)); conn.commit(); conn.close()
-    log_activity(member_id,"stamp_added",f"+1 stamp από {session.get('username')}")
-    flash("Η σφραγίδα προστέθηκε.","success")
-    return redirect(url_for("staff",q=m["member_code"]))
+    m = fetchone("SELECT * FROM members WHERE id=?", (member_id,))
+
+    if not m:
+        return "Not found", 404
+
+    if m["stamps"] >= STAMP_GOAL:
+        flash("Υπάρχει ήδη διαθέσιμο δώρο. Κάνε πρώτα εξαργύρωση.", "error")
+        return redirect(url_for("staff", q=m["member_code"]))
+
+    # Προστασία από διπλό πάτημα - 30 δευτερόλεπτα
+    last_stamp = fetchone(
+        """
+        SELECT created_at
+        FROM activity
+        WHERE member_id=? AND action='stamp_added'
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (member_id,)
+    )
+
+    if last_stamp:
+        try:
+            last_time = datetime.strptime(
+                last_stamp["created_at"],
+                "%Y-%m-%d %H:%M:%S"
+            )
+
+            seconds_passed = (datetime.now() - last_time).total_seconds()
+
+            if seconds_passed < 30:
+                remaining = max(1, int(30 - seconds_passed))
+
+                flash(
+                    f"Η σφραγίδα έχει ήδη καταχωρηθεί. Περίμενε {remaining} δευτερόλεπτα.",
+                    "error"
+                )
+
+                return redirect(
+                    url_for("staff", q=m["member_code"])
+                )
+
+        except (ValueError, TypeError):
+            pass
+
+    conn = connect()
+    execute(
+        conn,
+        "UPDATE members SET stamps=stamps+1 WHERE id=?",
+        (member_id,)
+    )
+    conn.commit()
+    conn.close()
+
+    log_activity(
+        member_id,
+        "stamp_added",
+        f"+1 stamp από {session.get('username')}"
+    )
+
+    flash("Η σφραγίδα προστέθηκε.", "success")
+
+    return redirect(
+        url_for("staff", q=m["member_code"])
+    )
 
 @app.post("/staff/member/<int:member_id>/redeem")
 @require_role("staff","admin")
