@@ -362,17 +362,152 @@ def redeem(member_id):
 @app.route("/admin")
 @require_role("admin")
 def dashboard():
+
+    # Αναζήτηση / φίλτρα
+    q = request.args.get("q", "").strip()
+    status = request.args.get("status", "all").strip()
+
     stats = {
-        "members": fetchone("SELECT COUNT(*) AS n FROM members")["n"],
-        "stamps": fetchone("SELECT COALESCE(SUM(stamps),0) AS n FROM members")["n"],
-        "redeemed": fetchone("SELECT COALESCE(SUM(redeemed),0) AS n FROM members")["n"],
-        "ready": fetchone("SELECT COUNT(*) AS n FROM members WHERE stamps>=?",(STAMP_GOAL,))["n"],
+        "members": fetchone(
+            "SELECT COUNT(*) AS n FROM members"
+        )["n"],
+
+        "stamps": fetchone(
+            "SELECT COALESCE(SUM(stamps),0) AS n FROM members"
+        )["n"],
+
+        "redeemed": fetchone(
+            "SELECT COALESCE(SUM(redeemed),0) AS n FROM members"
+        )["n"],
+
+        "ready": fetchone(
+            "SELECT COUNT(*) AS n FROM members WHERE stamps>=?",
+            (STAMP_GOAL,)
+        )["n"],
     }
-    members=fetchall("SELECT * FROM members ORDER BY id DESC LIMIT 200")
-    activity=fetchall("""SELECT activity.*, members.name, members.member_code FROM activity
-                         LEFT JOIN members ON members.id=activity.member_id ORDER BY activity.id DESC LIMIT 50""")
-    offers=fetchall("SELECT * FROM offers ORDER BY id DESC")
-    return render_template("admin.html", stats=stats, members=members, activity=activity, offers=offers, goal=STAMP_GOAL)
+
+
+    # Όλοι οι πελάτες + τελευταία δραστηριότητα
+    all_members = fetchall(
+        """
+        SELECT
+            m.*,
+            MAX(a.created_at) AS last_activity
+        FROM members m
+        LEFT JOIN activity a
+            ON a.member_id = m.id
+        GROUP BY m.id
+        ORDER BY m.id DESC
+        """
+    )
+
+
+    now_dt = datetime.now()
+
+    members = []
+
+    for m in all_members:
+
+        last_activity = m["last_activity"]
+
+        active = False
+
+        if last_activity:
+
+            try:
+                last_dt = datetime.strptime(
+                    last_activity,
+                    "%Y-%m-%d %H:%M:%S"
+                )
+
+                days_since = (
+                    now_dt - last_dt
+                ).days
+
+                active = days_since <= 30
+
+            except (ValueError, TypeError):
+                active = False
+
+
+        # Αναζήτηση
+        if q:
+
+            haystack = " ".join([
+                str(m["name"] or ""),
+                str(m["phone"] or ""),
+                str(m["email"] or ""),
+                str(m["member_code"] or "")
+            ]).lower()
+
+            if q.lower() not in haystack:
+                continue
+
+
+        # Φίλτρο ενεργών / ανενεργών
+        if status == "active" and not active:
+            continue
+
+        if status == "inactive" and active:
+            continue
+
+
+        member_data = dict(m)
+        member_data["is_active"] = active
+
+        members.append(member_data)
+
+
+    # Top πελάτες
+    top_members = fetchall(
+        """
+        SELECT
+            member_code,
+            name,
+            phone,
+            stamps,
+            redeemed,
+            (stamps + redeemed * ?) AS score
+        FROM members
+        ORDER BY score DESC, redeemed DESC, stamps DESC
+        LIMIT 10
+        """,
+        (STAMP_GOAL,)
+    )
+
+
+    # Τελευταίες κινήσεις
+    activity = fetchall(
+        """
+        SELECT
+            activity.*,
+            members.name,
+            members.member_code
+        FROM activity
+        LEFT JOIN members
+            ON members.id = activity.member_id
+        ORDER BY activity.id DESC
+        LIMIT 100
+        """
+    )
+
+
+    offers = fetchall(
+        "SELECT * FROM offers ORDER BY id DESC"
+    )
+
+
+    return render_template(
+        "admin.html",
+        stats=stats,
+        members=members,
+        activity=activity,
+        offers=offers,
+        top_members=top_members,
+        goal=STAMP_GOAL,
+        q=q,
+        status=status
+    )
 
 @app.post("/admin/offers")
 @require_role("admin")
