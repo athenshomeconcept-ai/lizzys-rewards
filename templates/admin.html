@@ -1,46 +1,322 @@
-
 {% extends "base.html" %}
+
 {% block content %}
+
 <div class="page-head">
-  <div><span class="eyebrow">ADMIN</span><h1>Dashboard</h1></div>
-  <a class="btn secondary" href="{{ url_for('export_members') }}">Export CSV</a>
+  <div>
+    <span class="eyebrow">ADMIN</span>
+    <h1>Dashboard</h1>
+  </div>
+
+  <a class="btn secondary" href="{{ url_for('export_members') }}">
+    Export CSV
+  </a>
 </div>
+
+
 <section class="stats">
-  <div><span>Μέλη</span><strong>{{ stats.members }}</strong></div>
-  <div><span>Σφραγίδες</span><strong>{{ stats.stamps }}</strong></div>
-  <div><span>Δώρα έτοιμα</span><strong>{{ stats.ready }}</strong></div>
-  <div><span>Εξαργυρώσεις</span><strong>{{ stats.redeemed }}</strong></div>
+
+  <div>
+    <span>Μέλη</span>
+    <strong>{{ stats.members }}</strong>
+  </div>
+
+  <div>
+    <span>Σφραγίδες</span>
+    <strong>{{ stats.stamps }}</strong>
+  </div>
+
+  <div>
+    <span>Δώρα έτοιμα</span>
+    <strong>{{ stats.ready }}</strong>
+  </div>
+
+  <div>
+    <span>Εξαργυρώσεις</span>
+    <strong>{{ stats.redeemed }}</strong>
+  </div>
+
 </section>
+
 
 <section class="grid2">
+
   <div class="panel">
+
     <h2>Μέλη</h2>
-    <div class="table-wrap"><table>
-      <thead><tr><th>Μέλος</th><th>ID</th><th>Σφραγίδες</th><th>Εξαργ.</th></tr></thead>
-      <tbody>{% for m in members %}<tr><td><strong>{{m.name}}</strong><br><small>{{m.phone}}</small></td><td>{{m.member_code}}</td><td>{{m.stamps}}/{{goal}}</td><td>{{m.redeemed}}</td></tr>{% endfor %}</tbody>
-    </table></div>
+
+    <div class="table-wrap">
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>Μέλος</th>
+            <th>ID</th>
+            <th>Σφραγίδες</th>
+            <th>Εξαργ.</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          {% for m in members %}
+
+          <tr>
+
+            <td>
+              <strong>{{ m.name }}</strong>
+              <br>
+              <small>{{ m.phone }}</small>
+            </td>
+
+            <td>
+              {{ m.member_code }}
+            </td>
+
+            <td>
+              {{ m.stamps }}/{{ goal }}
+            </td>
+
+            <td>
+              {{ m.redeemed }}
+            </td>
+
+          </tr>
+
+          {% endfor %}
+
+        </tbody>
+
+      </table>
+
+    </div>
+
   </div>
+
 
   <div class="panel">
+
     <h2>Προσφορές μελών</h2>
-    <form class="form compact" method="post" action="{{url_for('add_offer')}}">
-      <label>Τίτλος<input name="title" required placeholder="π.χ. Διπλές σφραγίδες"></label>
-      <label>Περιγραφή<input name="description" placeholder="15:00–18:00"></label>
-      <button class="btn primary">Νέα προσφορά</button>
+
+    <form
+      class="form compact"
+      method="post"
+      action="{{ url_for('add_offer') }}">
+
+      <label>
+        Τίτλος
+        <input
+          name="title"
+          required
+          placeholder="π.χ. Διπλές σφραγίδες">
+      </label>
+
+      <label>
+        Περιγραφή
+        <input
+          name="description"
+          placeholder="15:00–18:00">
+      </label>
+
+      <button class="btn primary">
+        Νέα προσφορά
+      </button>
+
     </form>
+
+
     <div class="offer-admin">
+
       {% for o in offers %}
+
       <div>
-        <span><strong>{{o.title}}</strong><small>{{o.description}}</small></span>
-        <form method="post" action="{{url_for('toggle_offer',offer_id=o.id)}}"><button class="btn ghost">{{'Απενεργοποίηση' if o.active else 'Ενεργοποίηση'}}</button></form>
+
+        <span>
+          <strong>{{ o.title }}</strong>
+          <small>{{ o.description }}</small>
+        </span>
+
+        <form
+          method="post"
+          action="{{ url_for('toggle_offer', offer_id=o.id) }}">
+
+          <button class="btn ghost">
+
+            {% if o.active %}
+              Απενεργοποίηση
+            {% else %}
+              Ενεργοποίηση
+            {% endif %}
+
+          </button>
+
+        </form>
+
       </div>
+
       {% endfor %}
+
     </div>
+
   </div>
+
 </section>
 
-<section class="panel activity-panel">
-  <h2>Τελευταίες κινήσεις</h2>
-  <div class="activity">{% for a in activity %}<div><span><strong>{{a.name or 'Σύστημα'}}</strong> — {{a.action}}</span><small>{{a.created_at}}</small></div>{% endfor %}</div>
+
+<section
+  class="panel activity-panel"
+  style="margin-top:24px;">
+
+  <div
+    style="
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:15px;
+      margin-bottom:20px;
+    ">
+
+    <div>
+      <span class="eyebrow">
+        AUDIT LOG
+      </span>
+
+      <h2 style="margin-top:6px;">
+        Ιστορικό κινήσεων
+      </h2>
+    </div>
+
+    <span
+      style="
+        font-size:13px;
+        color:#756d68;
+      ">
+      Τελευταίες {{ activity|length }} κινήσεις
+    </span>
+
+  </div>
+
+
+  <div class="table-wrap">
+
+    <table>
+
+      <thead>
+
+        <tr>
+          <th>Ημερομηνία</th>
+          <th>Μέλος</th>
+          <th>ID</th>
+          <th>Ενέργεια</th>
+          <th>Χρήστης / Πληροφορίες</th>
+        </tr>
+
+      </thead>
+
+
+      <tbody>
+
+        {% for a in activity %}
+
+        <tr>
+
+          <td>
+            {{ a.created_at }}
+          </td>
+
+
+          <td>
+            <strong>
+              {{ a.name or 'Σύστημα' }}
+            </strong>
+          </td>
+
+
+          <td>
+            {{ a.member_code or '-' }}
+          </td>
+
+
+          <td>
+
+            {% if a.action == 'stamp_added' %}
+
+              <span
+                style="
+                  display:inline-block;
+                  padding:6px 10px;
+                  background:#eaf7ef;
+                  color:#1c6a43;
+                  border-radius:999px;
+                  font-weight:700;
+                  font-size:12px;
+                ">
+                +1 Σφραγίδα
+              </span>
+
+
+            {% elif a.action == 'reward_redeemed' %}
+
+              <span
+                style="
+                  display:inline-block;
+                  padding:6px 10px;
+                  background:#f8ded8;
+                  color:#8c544a;
+                  border-radius:999px;
+                  font-weight:700;
+                  font-size:12px;
+                ">
+                Εξαργύρωση
+              </span>
+
+
+            {% elif a.action == 'member_created' %}
+
+              <span
+                style="
+                  display:inline-block;
+                  padding:6px 10px;
+                  background:#f2eeee;
+                  color:#555;
+                  border-radius:999px;
+                  font-weight:700;
+                  font-size:12px;
+                ">
+                Νέα εγγραφή
+              </span>
+
+
+            {% else %}
+
+              {{ a.action }}
+
+            {% endif %}
+
+          </td>
+
+
+          <td>
+
+            {% if a.details %}
+              {{ a.details }}
+            {% else %}
+              -
+            {% endif %}
+
+          </td>
+
+        </tr>
+
+        {% endfor %}
+
+      </tbody>
+
+    </table>
+
+  </div>
+
 </section>
+
 {% endblock %}
