@@ -227,30 +227,86 @@
 
     <h2>Προσφορές μελών</h2>
 
-    <form class="form compact"
-          method="post"
-          action="{{ url_for('add_offer') }}">
+<form class="form compact"
+      method="post"
+      action="{{ url_for('add_offer') }}">
 
-      <label>
-        Τίτλος
-        <input
-          name="title"
-          required
-          placeholder="π.χ. Διπλές σφραγίδες">
-      </label>
+  <label>
+    Τίτλος προσφοράς
+    <input
+      name="title"
+      required
+      placeholder="π.χ. Διπλές σφραγίδες">
+  </label>
 
-      <label>
-        Περιγραφή
-        <input
-          name="description"
-          placeholder="15:00–18:00">
-      </label>
+  <label>
+    Τύπος προσφοράς
+    <select name="offer_type">
+      <option value="stamps">Extra σφραγίδες</option>
+      <option value="discount">Έκπτωση</option>
+      <option value="gift">Δώρο προϊόν</option>
+      <option value="special">Ειδική προσφορά</option>
+    </select>
+  </label>
 
-      <button class="btn primary">
-        Νέα προσφορά
-      </button>
+  <label>
+    Προϊόν
+    <input
+      name="product"
+      placeholder="π.χ. Freddo Espresso">
+  </label>
 
-    </form>
+  <label>
+    Περιγραφή
+    <textarea
+      name="description"
+      rows="3"
+      placeholder="π.χ. Με κάθε Freddo Espresso κερδίζεις διπλές σφραγίδες"></textarea>
+  </label>
+
+  <label>
+    Ισχύει από
+    <input
+      type="date"
+      name="start_date">
+  </label>
+
+  <label>
+    Ισχύει έως
+    <input
+      type="date"
+      name="end_date">
+  </label>
+
+  <label>
+    Ώρα έναρξης
+    <input
+      type="time"
+      name="start_time">
+  </label>
+
+  <label>
+    Ώρα λήξης
+    <input
+      type="time"
+      name="end_time">
+  </label>
+
+  <label>
+    Σε ποιους πελάτες
+    <select name="target_group">
+      <option value="all">Όλοι οι πελάτες</option>
+      <option value="active">Ενεργοί πελάτες</option>
+      <option value="inactive">Ανενεργοί πελάτες</option>
+      <option value="top">Κορυφαίοι πελάτες</option>
+    </select>
+  </label>
+
+  <button class="btn primary" type="submit">
+    Δημιουργία προσφοράς
+  </button>
+
+</form>
 
 
     <div class="offer-admin">
