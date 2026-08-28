@@ -15,35 +15,76 @@
 
 
 <section class="stats">
+  <div><span>Μέλη</span><strong>{{ stats.members }}</strong></div>
+  <div><span>Σφραγίδες</span><strong>{{ stats.stamps }}</strong></div>
+  <div><span>Δώρα έτοιμα</span><strong>{{ stats.ready }}</strong></div>
+  <div><span>Εξαργυρώσεις</span><strong>{{ stats.redeemed }}</strong></div>
+</section>
 
-  <div>
-    <span>Μέλη</span>
-    <strong>{{ stats.members }}</strong>
+
+<section class="panel" style="margin-top:20px;">
+
+  <div class="panel-head">
+    <div>
+      <span class="eyebrow">ΔΙΑΧΕΙΡΙΣΗ ΜΕΛΩΝ</span>
+      <h2>Αναζήτηση & φίλτρα</h2>
+    </div>
   </div>
 
-  <div>
-    <span>Σφραγίδες</span>
-    <strong>{{ stats.stamps }}</strong>
-  </div>
+  <form method="get"
+        style="
+          display:grid;
+          grid-template-columns:1fr 220px auto;
+          gap:12px;
+          margin-top:18px;
+        ">
 
-  <div>
-    <span>Δώρα έτοιμα</span>
-    <strong>{{ stats.ready }}</strong>
-  </div>
+    <input
+      type="text"
+      name="q"
+      value="{{ q }}"
+      placeholder="Όνομα, κινητό, email ή ID">
 
-  <div>
-    <span>Εξαργυρώσεις</span>
-    <strong>{{ stats.redeemed }}</strong>
-  </div>
+    <select
+      name="status"
+      style="
+        border:1px solid #eaded8;
+        border-radius:14px;
+        padding:13px 14px;
+        background:#fff;
+      ">
+
+      <option value="all" {% if status == 'all' %}selected{% endif %}>
+        Όλοι
+      </option>
+
+      <option value="active" {% if status == 'active' %}selected{% endif %}>
+        Ενεργοί
+      </option>
+
+      <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>
+        Ανενεργοί
+      </option>
+
+    </select>
+
+    <button class="btn primary">
+      Αναζήτηση
+    </button>
+
+  </form>
 
 </section>
 
 
-<section class="grid2">
+<section class="grid2" style="margin-top:20px;">
 
   <div class="panel">
 
-    <h2>Μέλη</h2>
+    <div class="panel-head">
+      <h2>Μέλη</h2>
+      <span class="muted">{{ members|length }} αποτελέσματα</span>
+    </div>
 
     <div class="table-wrap">
 
@@ -53,8 +94,10 @@
           <tr>
             <th>Μέλος</th>
             <th>ID</th>
+            <th>Κατάσταση</th>
             <th>Σφραγίδες</th>
             <th>Εξαργ.</th>
+            <th>Τελευταία κίνηση</th>
           </tr>
         </thead>
 
@@ -68,18 +111,54 @@
               <strong>{{ m.name }}</strong>
               <br>
               <small>{{ m.phone }}</small>
+              {% if m.email %}
+                <br>
+                <small>{{ m.email }}</small>
+              {% endif %}
             </td>
 
-            <td>
-              {{ m.member_code }}
-            </td>
+            <td>{{ m.member_code }}</td>
 
             <td>
-              {{ m.stamps }}/{{ goal }}
+
+              {% if m.is_active %}
+
+                <span style="
+                  display:inline-block;
+                  padding:6px 10px;
+                  border-radius:999px;
+                  background:#eaf7ef;
+                  color:#1c6a43;
+                  font-size:12px;
+                  font-weight:700;
+                ">
+                  Ενεργός
+                </span>
+
+              {% else %}
+
+                <span style="
+                  display:inline-block;
+                  padding:6px 10px;
+                  border-radius:999px;
+                  background:#f2eeee;
+                  color:#666;
+                  font-size:12px;
+                  font-weight:700;
+                ">
+                  Ανενεργός
+                </span>
+
+              {% endif %}
+
             </td>
 
+            <td>{{ m.stamps }}/{{ goal }}</td>
+
+            <td>{{ m.redeemed }}</td>
+
             <td>
-              {{ m.redeemed }}
+              {{ m.last_activity or '-' }}
             </td>
 
           </tr>
@@ -97,12 +176,56 @@
 
   <div class="panel">
 
+    <span class="eyebrow">TOP MEMBERS</span>
+    <h2>Κορυφαίοι πελάτες</h2>
+
+    <div style="display:grid;gap:12px;margin-top:18px;">
+
+      {% for m in top_members %}
+
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:12px;
+        padding:14px;
+        border:1px solid #eaded8;
+        border-radius:16px;
+        background:#fffaf7;
+      ">
+
+        <div>
+          <strong>{{ loop.index }}. {{ m.name }}</strong>
+          <br>
+          <small>{{ m.member_code }}</small>
+        </div>
+
+        <div style="text-align:right;">
+          <strong>{{ m.score }}</strong>
+          <br>
+          <small>πόντοι δραστηριότητας</small>
+        </div>
+
+      </div>
+
+      {% endfor %}
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<section class="grid2" style="margin-top:20px;">
+
+  <div class="panel">
+
     <h2>Προσφορές μελών</h2>
 
-    <form
-      class="form compact"
-      method="post"
-      action="{{ url_for('add_offer') }}">
+    <form class="form compact"
+          method="post"
+          action="{{ url_for('add_offer') }}">
 
       <label>
         Τίτλος
@@ -161,37 +284,43 @@
 
   </div>
 
+
+  <div class="panel">
+
+    <span class="eyebrow">INSIGHT</span>
+    <h2>Πώς ορίζουμε ενεργό πελάτη</h2>
+
+    <p>
+      Ενεργός θεωρείται πελάτης που έχει κάποια κίνηση
+      στο Lizzy’s Rewards μέσα στις τελευταίες 30 ημέρες.
+    </p>
+
+    <p>
+      Αν περάσουν περισσότερες από 30 ημέρες χωρίς δραστηριότητα,
+      εμφανίζεται ως ανενεργός.
+    </p>
+
+  </div>
+
 </section>
 
 
-<section
-  class="panel activity-panel"
-  style="margin-top:24px;">
+<section class="panel activity-panel" style="margin-top:24px;">
 
-  <div
-    style="
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:15px;
-      margin-bottom:20px;
-    ">
+  <div style="
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:15px;
+    margin-bottom:20px;
+  ">
 
     <div>
-      <span class="eyebrow">
-        AUDIT LOG
-      </span>
-
-      <h2 style="margin-top:6px;">
-        Ιστορικό κινήσεων
-      </h2>
+      <span class="eyebrow">AUDIT LOG</span>
+      <h2 style="margin-top:6px;">Ιστορικό κινήσεων</h2>
     </div>
 
-    <span
-      style="
-        font-size:13px;
-        color:#756d68;
-      ">
+    <span class="muted">
       Τελευταίες {{ activity|length }} κινήσεις
     </span>
 
@@ -203,7 +332,6 @@
     <table>
 
       <thead>
-
         <tr>
           <th>Ημερομηνία</th>
           <th>Μέλος</th>
@@ -211,9 +339,7 @@
           <th>Ενέργεια</th>
           <th>Χρήστης / Πληροφορίες</th>
         </tr>
-
       </thead>
-
 
       <tbody>
 
@@ -221,72 +347,57 @@
 
         <tr>
 
-          <td>
-            {{ a.created_at }}
-          </td>
-
+          <td>{{ a.created_at }}</td>
 
           <td>
-            <strong>
-              {{ a.name or 'Σύστημα' }}
-            </strong>
+            <strong>{{ a.name or 'Σύστημα' }}</strong>
           </td>
 
-
-          <td>
-            {{ a.member_code or '-' }}
-          </td>
-
+          <td>{{ a.member_code or '-' }}</td>
 
           <td>
 
             {% if a.action == 'stamp_added' %}
 
-              <span
-                style="
-                  display:inline-block;
-                  padding:6px 10px;
-                  background:#eaf7ef;
-                  color:#1c6a43;
-                  border-radius:999px;
-                  font-weight:700;
-                  font-size:12px;
-                ">
+              <span style="
+                display:inline-block;
+                padding:6px 10px;
+                background:#eaf7ef;
+                color:#1c6a43;
+                border-radius:999px;
+                font-weight:700;
+                font-size:12px;
+              ">
                 +1 Σφραγίδα
               </span>
 
-
             {% elif a.action == 'reward_redeemed' %}
 
-              <span
-                style="
-                  display:inline-block;
-                  padding:6px 10px;
-                  background:#f8ded8;
-                  color:#8c544a;
-                  border-radius:999px;
-                  font-weight:700;
-                  font-size:12px;
-                ">
+              <span style="
+                display:inline-block;
+                padding:6px 10px;
+                background:#f8ded8;
+                color:#8c544a;
+                border-radius:999px;
+                font-weight:700;
+                font-size:12px;
+              ">
                 Εξαργύρωση
               </span>
 
-
             {% elif a.action == 'member_created' %}
 
-              <span
-                style="
-                  display:inline-block;
-                  padding:6px 10px;
-                  background:#f2eeee;
-                  color:#555;
-                  border-radius:999px;
-                  font-weight:700;
-                  font-size:12px;
-                ">
+              <span style="
+                display:inline-block;
+                padding:6px 10px;
+                background:#f2eeee;
+                color:#555;
+                border-radius:999px;
+                font-weight:700;
+                font-size:12px;
+              ">
                 Νέα εγγραφή
               </span>
-
 
             {% else %}
 
@@ -296,15 +407,8 @@
 
           </td>
 
-
           <td>
-
-            {% if a.details %}
-              {{ a.details }}
-            {% else %}
-              -
-            {% endif %}
-
+            {{ a.details or '-' }}
           </td>
 
         </tr>
@@ -318,5 +422,18 @@
   </div>
 
 </section>
+
+
+<style>
+
+@media(max-width:850px){
+
+  form[method="get"]{
+    grid-template-columns:1fr !important;
+  }
+
+}
+
+</style>
 
 {% endblock %}
