@@ -1,0 +1,27 @@
+
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <div>
+    <span class="eyebrow">LIZZY’S COFFEE & MORE</span>
+    <h1>Σκάναρε. Μάζεψε. Απόλαυσε.</h1>
+    <p>Μάζεψε 8 σφραγίδες από αγορές καφέ και ο επόμενος καφές είναι δικός μας.</p>
+    <div class="actions">
+      <a class="btn primary" href="{{ url_for('join') }}">Γίνε μέλος</a>
+      <a class="btn secondary" href="{{ url_for('login') }}">Staff / Admin</a>
+    </div>
+  </div>
+  <div class="hero-card">
+    <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Lizzy's">
+    <div class="big">8 + 1</div>
+    <strong>8 αγορές → 1 δωρεάν καφές</strong>
+  </div>
+</section>
+
+<section class="steps">
+  <div><b>1</b><h3>Σκάναρε το QR</h3><p>Από το ταμείο του καταστήματος.</p></div>
+  <div><b>2</b><h3>Κάνε εγγραφή</h3><p>Όνομα και κινητό σε λίγα δευτερόλεπτα.</p></div>
+  <div><b>3</b><h3>Μάζεψε σφραγίδες</h3><p>Το προσωπικό πιστώνει την αγορά σου.</p></div>
+  <div><b>4</b><h3>Πάρε το δώρο</h3><p>Στις 8 σφραγίδες ξεκλειδώνει καφές.</p></div>
+</section>
+{% endblock %}

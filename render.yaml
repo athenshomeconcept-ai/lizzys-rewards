@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: lizzys-rewards
+    runtime: docker
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: "1"
+      - key: STAMP_GOAL
+        value: "8"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: lizzys-rewards-db
+          property: connectionString
+      - key: ADMIN_USER
+        value: admin
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: STAFF_USER
+        value: staff
+      - key: STAFF_PASSWORD
+        sync: false
+
+databases:
+  - name: lizzys-rewards-db
+    plan: basic-256mb

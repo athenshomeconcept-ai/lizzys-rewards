@@ -1,0 +1,20 @@
+
+{% extends "base.html" %}
+{% block title %}Εγγραφή — Lizzy’s Rewards{% endblock %}
+{% block content %}
+<div class="narrow panel">
+  <img class="form-logo" src="{{ url_for('static', filename='logo.jpg') }}">
+  <span class="eyebrow">ΝΕΟ ΜΕΛΟΣ</span>
+  <h1>Καλώς ήρθες στο Lizzy’s Rewards</h1>
+  <p>Συμπλήρωσε τα στοιχεία σου και η ψηφιακή κάρτα δημιουργείται αμέσως.</p>
+  <form method="post" class="form">
+    <label>Ονοματεπώνυμο<input name="name" required autocomplete="name"></label>
+    <label>Κινητό<input name="phone" required inputmode="tel" autocomplete="tel"></label>
+    <label>Email (προαιρετικό)<input name="email" type="email" autocomplete="email"></label>
+    <label>Ημερομηνία γέννησης (προαιρετικό)<input name="birthday" type="date"></label>
+    <label class="consent"><input name="consent_marketing" type="checkbox"> Θέλω να λαμβάνω προνόμια και προσφορές του Lizzy’s.</label>
+    <button class="btn primary">Δημιουργία κάρτας</button>
+  </form>
+  <p class="fineprint">Με την εγγραφή αποδέχεσαι την αποθήκευση των στοιχείων που είναι απαραίτητα για τη λειτουργία του προγράμματος επιβράβευσης.</p>
+</div>
+{% endblock %}

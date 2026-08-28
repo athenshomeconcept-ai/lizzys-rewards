@@ -1,0 +1,37 @@
+
+{% extends "base.html" %}
+{% block title %}Η κάρτα μου — Lizzy’s Rewards{% endblock %}
+{% block content %}
+<div class="card-layout">
+  <section class="member-card">
+    <div class="member-top"><img src="{{ url_for('static', filename='logo.jpg') }}"><span>MEMBER</span></div>
+    <h2>{{ member.name }}</h2>
+    <div class="counter">{{ member.stamps if member.stamps <= goal else goal }} / {{ goal }}</div>
+    <div class="stamps">
+      {% for i in range(goal) %}<span class="stamp {% if i < member.stamps %}on{% endif %}">{% if i < member.stamps %}☕{% endif %}</span>{% endfor %}
+    </div>
+    <small>{{ member.member_code }}</small>
+  </section>
+  <section class="panel center">
+    <span class="eyebrow">Η ΠΡΟΣΩΠΙΚΗ ΣΟΥ ΚΑΡΤΑ</span>
+    {% if available > 0 %}
+      <h1>🎁 Το δώρο σου είναι έτοιμο!</h1><p>Δείξε αυτή την οθόνη στο ταμείο για εξαργύρωση.</p>
+    {% else %}
+      <h1>Άλλοι {{ goal-member.stamps }} καφέδες</h1><p>και ο επόμενος είναι δικός μας.</p>
+    {% endif %}
+    <img class="qr-img" src="{{ url_for('qr', token=member.token) }}" alt="Member QR">
+    <p class="muted">Το QR είναι μοναδικό για το μέλος σου.</p>
+  </section>
+</div>
+{% if offers %}
+<section class="panel offers-panel">
+  <span class="eyebrow">ΠΡΟΣΦΟΡΕΣ ΜΕΛΩΝ</span>
+  <h2>Για σένα</h2>
+  <div class="offer-list">
+  {% for o in offers %}
+    <div class="offer-item"><strong>{{o.title}}</strong><span>{{o.description}}</span></div>
+  {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}
