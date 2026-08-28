@@ -560,11 +560,57 @@ def admin_member(member_id):
 @app.post("/admin/offers")
 @require_role("admin")
 def add_offer():
-    title=request.form.get("title","").strip()
-    description=request.form.get("description","").strip()
+    title = request.form.get("title", "").strip()
+    description = request.form.get("description", "").strip()
+    offer_type = request.form.get("offer_type", "").strip()
+    start_date = request.form.get("start_date", "").strip()
+    end_date = request.form.get("end_date", "").strip()
+    start_time = request.form.get("start_time", "").strip()
+    end_time = request.form.get("end_time", "").strip()
+    target_group = request.form.get("target_group", "all").strip()
+    product = request.form.get("product", "").strip()
+
     if title:
-        conn=connect(); execute(conn,"INSERT INTO offers(title,description,active,created_at) VALUES(?,?,?,?)",(title,description,1,now())); conn.commit(); conn.close()
-        flash("Η προσφορά δημιουργήθηκε.","success")
+        conn = connect()
+
+        execute(
+            conn,
+            """
+            INSERT INTO offers(
+                title,
+                description,
+                active,
+                created_at,
+                offer_type,
+                start_date,
+                end_date,
+                start_time,
+                end_time,
+                target_group,
+                product
+            )
+            VALUES(?,?,?,?,?,?,?,?,?,?,?)
+            """,
+            (
+                title,
+                description,
+                1,
+                now(),
+                offer_type,
+                start_date,
+                end_date,
+                start_time,
+                end_time,
+                target_group,
+                product
+            )
+        )
+
+        conn.commit()
+        conn.close()
+
+        flash("Η προσφορά δημιουργήθηκε.", "success")
+
     return redirect(url_for("dashboard"))
 
 @app.post("/admin/offers/<int:offer_id>/toggle")
