@@ -93,7 +93,23 @@ def init_db():
             description TEXT,
             active INTEGER NOT NULL DEFAULT 1,
             created_at TEXT NOT NULL
-        )""")
+        )""")        
+        # Upgrade existing offers table with new fields
+        offer_columns = [
+            ("offer_type", "TEXT"),
+            ("start_date", "TEXT"),
+            ("end_date", "TEXT"),
+            ("start_time", "TEXT"),
+            ("end_time", "TEXT"),
+            ("target_group", "TEXT DEFAULT 'all'"),
+            ("product", "TEXT")
+        ]
+
+        for column_name, column_type in offer_columns:
+            c.execute(
+                f"ALTER TABLE offers "
+                f"ADD COLUMN IF NOT EXISTS {column_name} {column_type}"
+            )
     else:
         c.executescript("""
         CREATE TABLE IF NOT EXISTS users(
@@ -124,13 +140,20 @@ def init_db():
             details TEXT,
             created_at TEXT NOT NULL
         );
-        CREATE TABLE IF NOT EXISTS offers(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            description TEXT,
-            active INTEGER NOT NULL DEFAULT 1,
-            created_at TEXT NOT NULL
-        );
+      CREATE TABLE IF NOT EXISTS offers(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT,
+    active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL,
+    offer_type TEXT,
+    start_date TEXT,
+    end_date TEXT,
+    start_time TEXT,
+    end_time TEXT,
+    target_group TEXT DEFAULT 'all',
+    product TEXT
+);
         """)
     conn.commit()
 
