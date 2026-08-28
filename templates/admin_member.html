@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+    <div style="margin-bottom: 25px;">
+        <a href="{{ url_for('dashboard') }}" style="text-decoration:none;">
+            ← Επιστροφή στο Dashboard
+        </a>
+    </div>
+
+    <div class="card">
+
+        <h2>{{ member["name"] }}</h2>
+
+        <div style="margin-top:20px; line-height:1.8;">
+
+            <p>
+                <strong>ID Μέλους:</strong>
+                {{ member["member_code"] }}
+            </p>
+
+            <p>
+                <strong>Τηλέφωνο:</strong>
+                {{ member["phone"] or "-" }}
+            </p>
+
+            <p>
+                <strong>Email:</strong>
+                {{ member["email"] or "-" }}
+            </p>
+
+            <p>
+                <strong>Ημερομηνία γέννησης:</strong>
+                {{ member["birthday"] or "-" }}
+            </p>
+
+            <p>
+                <strong>Σφραγίδες:</strong>
+                {{ member["stamps"] }} / {{ goal }}
+            </p>
+
+            <p>
+                <strong>Διαθέσιμα δώρα:</strong>
+                {{ member["rewards"] }}
+            </p>
+
+            <p>
+                <strong>Εξαργυρώσεις:</strong>
+                {{ member["redeemed"] }}
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="card" style="margin-top:25px;">
+
+        <h2>Ιστορικό πελάτη</h2>
+
+        {% if history %}
+
+        <div style="overflow-x:auto;">
+
+            <table style="width:100%; margin-top:20px;">
+
+                <thead>
+                    <tr>
+                        <th>Ημερομηνία</th>
+                        <th>Ενέργεια</th>
+                        <th>Περιγραφή</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                {% for item in history %}
+
+                    <tr>
+
+                        <td>
+                            {{ item["created_at"] }}
+                        </td>
+
+                        <td>
+                            {{ item["action"] }}
+                        </td>
+
+                        <td>
+                            {{ item["details"] or "-" }}
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+            <p style="margin-top:20px;">
+                Δεν υπάρχει ακόμη ιστορικό για αυτόν τον πελάτη.
+            </p>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}
