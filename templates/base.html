@@ -1,0 +1,35 @@
+
+<!doctype html>
+<html lang="el">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#efb8ae">
+  <title>{% block title %}Lizzy’s Rewards{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="{{ url_for('home') }}">
+    <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Lizzy's">
+    <div><strong>LIZZY’S REWARDS</strong><small>Coffee & More</small></div>
+  </a>
+  <nav>
+    <a href="{{ url_for('join') }}">Εγγραφή</a>
+    {% if session.get('role') %}
+      <a href="{{ url_for('staff') }}">Staff</a>
+      {% if session.get('role')=='admin' %}<a href="{{ url_for('dashboard') }}">Admin</a>{% endif %}
+      <a href="{{ url_for('logout') }}">Έξοδος</a>
+    {% else %}
+      <a href="{{ url_for('login') }}">Σύνδεση προσωπικού</a>
+    {% endif %}
+  </nav>
+</header>
+<main class="container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat,msg in messages %}<div class="flash {{cat}}">{{msg}}</div>{% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>
