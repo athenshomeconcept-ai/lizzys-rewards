@@ -1,32 +1,352 @@
-
 {% extends "base.html" %}
+
 {% block content %}
-<div class="page-head"><div><span class="eyebrow">STAFF PANEL</span><h1>Νέα σφραγίδα / Εξαργύρωση</h1></div></div>
-<section class="panel">
-  <form method="get" class="search">
-    <input name="q" value="{{ q }}" placeholder="Όνομα, κινητό, ID ή QR token">
-    <button class="btn secondary">Αναζήτηση</button>
-  </form>
-</section>
-{% if q and not members %}<div class="panel"><p>Δεν βρέθηκε μέλος.</p></div>{% endif %}
-{% for m in members %}
-<section class="panel member-row">
+
+<div class="page-head">
   <div>
-    <span class="eyebrow">{{ m.member_code }}</span>
-    <h2>{{ m.name }}</h2>
-    <p>{{ m.phone }}{% if m.email %} · {{ m.email }}{% endif %}</p>
+    <span class="eyebrow">STAFF PANEL</span>
+    <h1>Νέα σφραγίδα / Εξαργύρωση</h1>
   </div>
-  <div class="mini-stamps">
-    <strong>{{ m.stamps }}/{{ goal }}</strong>
-    <div class="stamps">
-      {% for i in range(goal) %}<span class="stamp {% if i < m.stamps %}on{% endif %}">{% if i < m.stamps %}☕{% endif %}</span>{% endfor %}
-    </div>
+</div>
+
+<section class="panel">
+
+  <div style="margin-bottom:20px;">
+    <button
+      type="button"
+      class="btn primary"
+      id="startScannerBtn">
+      📷 Σκανάρισμα QR
+    </button>
+
+    <button
+      type="button"
+      class="btn secondary"
+      id="stopScannerBtn"
+      style="display:none;">
+      Κλείσιμο κάμερας
+    </button>
   </div>
-  <div class="member-actions">
-    <form method="post" action="{{ url_for('add_stamp', member_id=m.id) }}"><button class="btn primary">+1 Σφραγίδα</button></form>
-    <form method="post" action="{{ url_for('redeem', member_id=m.id) }}"><button class="btn secondary" {% if m.stamps < goal and m.rewards < 1 %}disabled{% endif %}>Εξαργύρωση</button></form>
-    <a class="btn ghost" target="_blank" href="{{ url_for('card', token=m.token) }}">Κάρτα</a>
+
+  <div
+    id="qr-reader"
+    style="
+      width:100%;
+      max-width:500px;
+      display:none;
+      margin:0 auto 25px auto;
+      border-radius:20px;
+      overflow:hidden;
+    ">
   </div>
+
+  <div
+    id="scanner-message"
+    style="
+      display:none;
+      margin-bottom:18px;
+      padding:12px 15px;
+      border-radius:12px;
+      background:#f8ded8;
+    ">
+  </div>
+
+  <form method="get" class="search" id="memberSearchForm">
+
+    <input
+      id="memberSearchInput"
+      name="q"
+      value="{{ q }}"
+      placeholder="Όνομα, κινητό, ID ή QR token">
+
+    <button class="btn secondary">
+      Αναζήτηση
+    </button>
+
+  </form>
+
 </section>
+
+
+{% if q and not members %}
+
+<div class="panel">
+  <p>Δεν βρέθηκε μέλος.</p>
+</div>
+
+{% endif %}
+
+
+{% for m in members %}
+
+<section class="panel member-row">
+
+  <div>
+
+    <span class="eyebrow">
+      {{ m.member_code }}
+    </span>
+
+    <h2>
+      {{ m.name }}
+    </h2>
+
+    <p>
+      {{ m.phone }}
+      {% if m.email %}
+      · {{ m.email }}
+      {% endif %}
+    </p>
+
+  </div>
+
+
+  <div class="mini-stamps">
+
+    <strong>
+      {{ m.stamps }}/{{ goal }}
+    </strong>
+
+    <div class="stamps">
+
+      {% for i in range(goal) %}
+
+      <span
+        class="stamp
+        {% if i < m.stamps %}on{% endif %}">
+
+        {% if i < m.stamps %}
+        ☕
+        {% endif %}
+
+      </span>
+
+      {% endfor %}
+
+    </div>
+
+  </div>
+
+
+  <div class="member-actions">
+
+    <form
+      method="post"
+      action="{{ url_for('add_stamp', member_id=m.id) }}">
+
+      <button class="btn primary">
+        +1 Σφραγίδα
+      </button>
+
+    </form>
+
+
+    <form
+      method="post"
+      action="{{ url_for('redeem', member_id=m.id) }}">
+
+      <button
+        class="btn secondary"
+        {% if m.stamps < goal and m.rewards < 1 %}
+        disabled
+        {% endif %}>
+
+        Εξαργύρωση
+
+      </button>
+
+    </form>
+
+
+    <a
+      class="btn ghost"
+      target="_blank"
+      href="{{ url_for('card', token=m.token) }}">
+
+      Κάρτα
+
+    </a>
+
+  </div>
+
+</section>
+
 {% endfor %}
+
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<script>
+
+let html5QrCode = null;
+
+const startButton =
+  document.getElementById("startScannerBtn");
+
+const stopButton =
+  document.getElementById("stopScannerBtn");
+
+const reader =
+  document.getElementById("qr-reader");
+
+const message =
+  document.getElementById("scanner-message");
+
+const searchInput =
+  document.getElementById("memberSearchInput");
+
+const searchForm =
+  document.getElementById("memberSearchForm");
+
+
+function showMessage(text) {
+
+  message.innerText = text;
+  message.style.display = "block";
+
+}
+
+
+async function stopScanner() {
+
+  if (html5QrCode) {
+
+    try {
+      await html5QrCode.stop();
+      await html5QrCode.clear();
+    }
+    catch (e) {
+      console.log(e);
+    }
+
+  }
+
+  reader.style.display = "none";
+  stopButton.style.display = "none";
+  startButton.style.display = "inline-block";
+
+}
+
+
+startButton.addEventListener(
+  "click",
+  async function () {
+
+    reader.style.display = "block";
+
+    startButton.style.display = "none";
+    stopButton.style.display = "inline-block";
+
+    message.style.display = "none";
+
+    html5QrCode =
+      new Html5Qrcode("qr-reader");
+
+
+    try {
+
+      await html5QrCode.start(
+
+        {
+          facingMode: "environment"
+        },
+
+        {
+          fps: 10,
+          qrbox: {
+            width: 250,
+            height: 250
+          }
+        },
+
+        async function (decodedText) {
+
+          showMessage(
+            "QR αναγνωρίστηκε. Αναζήτηση μέλους..."
+          );
+
+
+          let searchValue = decodedText;
+
+
+          try {
+
+            const url =
+              new URL(decodedText);
+
+            const parts =
+              url.pathname.split("/");
+
+
+            if (
+              parts.length >= 3 &&
+              parts[1] === "card"
+            ) {
+
+              searchValue =
+                parts[2];
+
+            }
+
+          }
+
+          catch (e) {
+
+            searchValue =
+              decodedText;
+
+          }
+
+
+          searchInput.value =
+            searchValue;
+
+
+          await stopScanner();
+
+
+          searchForm.submit();
+
+        },
+
+        function () {
+
+          // αγνοούμε προσωρινά
+          // αποτυχημένα frames
+
+        }
+
+      );
+
+    }
+
+    catch (err) {
+
+      showMessage(
+        "Δεν ήταν δυνατή η πρόσβαση στην κάμερα. Έλεγξε ότι έχεις επιτρέψει τη χρήση κάμερας."
+      );
+
+      startButton.style.display =
+        "inline-block";
+
+      stopButton.style.display =
+        "none";
+
+      reader.style.display =
+        "none";
+
+    }
+
+  }
+
+);
+
+
+stopButton.addEventListener(
+  "click",
+  stopScanner
+);
+
+</script>
+
 {% endblock %}
