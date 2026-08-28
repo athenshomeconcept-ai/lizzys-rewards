@@ -108,7 +108,11 @@
           <tr>
 
             <td>
-              <strong>{{ m.name }}</strong>
+              <strong>
+    <a href="{{ url_for('admin_member', member_id=m.id) }}" style="color:inherit; text-decoration:underline; cursor:pointer;">
+        {{ m.name }}
+    </a>
+</strong>
               <br>
               <small>{{ m.phone }}</small>
               {% if m.email %}
