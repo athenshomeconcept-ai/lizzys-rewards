@@ -618,7 +618,79 @@ def add_offer():
 def toggle_offer(offer_id):
     conn=connect(); execute(conn,"UPDATE offers SET active=CASE WHEN active=1 THEN 0 ELSE 1 END WHERE id=?",(offer_id,)); conn.commit(); conn.close()
     return redirect(url_for("dashboard"))
+@app.route("/admin/offers/<int:offer_id>/edit", methods=["GET", "POST"])
+@require_role("admin")
+def edit_offer(offer_id):
 
+    offer = fetchone(
+        "SELECT * FROM offers WHERE id=?",
+        (offer_id,)
+    )
+
+    if not offer:
+        flash("Η προσφορά δεν βρέθηκε.", "error")
+        return redirect(url_for("dashboard"))
+
+    if request.method == "POST":
+        title = request.form.get("title", "").strip()
+        description = request.form.get("description", "").strip()
+        offer_type = request.form.get("offer_type", "").strip()
+        start_date = request.form.get("start_date", "").strip()
+        end_date = request.form.get("end_date", "").strip()
+        start_time = request.form.get("start_time", "").strip()
+        end_time = request.form.get("end_time", "").strip()
+        target_group = request.form.get("target_group", "all").strip()
+        product = request.form.get("product", "").strip()
+
+        if not title:
+            flash("Ο τίτλος είναι υποχρεωτικός.", "error")
+            return redirect(
+                url_for("edit_offer", offer_id=offer_id)
+            )
+
+        conn = connect()
+
+        execute(
+            conn,
+            """
+            UPDATE offers
+            SET
+                title=?,
+                description=?,
+                offer_type=?,
+                start_date=?,
+                end_date=?,
+                start_time=?,
+                end_time=?,
+                target_group=?,
+                product=?
+            WHERE id=?
+            """,
+            (
+                title,
+                description,
+                offer_type,
+                start_date,
+                end_date,
+                start_time,
+                end_time,
+                target_group,
+                product,
+                offer_id
+            )
+        )
+
+        conn.commit()
+        conn.close()
+
+        flash("Η προσφορά ενημερώθηκε.", "success")
+
+        return redirect(url_for("dashboard"))
+
+    return render_template(
+        "edit_offer.html",
+        offer=offer
+    )
 @app.route("/admin/export/members.csv")
 @require_role("admin")
 def export_members():
