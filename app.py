@@ -508,7 +508,32 @@ def dashboard():
         q=q,
         status=status
     )
+@app.route("/admin/member/<int:member_id>")
+@require_role("admin")
+def admin_member(member_id):
+    member = fetchone(
+        "SELECT * FROM members WHERE id=?",
+        (member_id,)
+    )
 
+    if not member:
+        flash("Το μέλος δεν βρέθηκε.", "error")
+        return redirect(url_for("dashboard"))
+
+    history = fetchall(
+        """SELECT * FROM activity
+           WHERE member_id=?
+           ORDER BY id DESC
+           LIMIT 100""",
+        (member_id,)
+    )
+
+    return render_template(
+        "admin_member.html",
+        member=member,
+        history=history,
+        goal=STAMP_GOAL
+    )
 @app.post("/admin/offers")
 @require_role("admin")
 def add_offer():
