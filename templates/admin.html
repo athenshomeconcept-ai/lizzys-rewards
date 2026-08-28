@@ -335,7 +335,10 @@
           </button>
 
         </form>
-
+<a class="btn ghost"
+   href="{{ url_for('edit_offer', offer_id=o.id) }}">
+  Επεξεργασία
+</a>
       </div>
 
       {% endfor %}
