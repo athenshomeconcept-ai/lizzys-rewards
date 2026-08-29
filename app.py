@@ -2,6 +2,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, send_file, Response
 import os, io, secrets, uuid, csv
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 import qrcode
@@ -252,12 +253,184 @@ def join():
 
 @app.route("/card/<token>")
 def card(token):
-    member = fetchone("SELECT * FROM members WHERE token=?", (token,))
-    if not member: return "Η κάρτα δεν βρέθηκε.", 404
-    available = member["rewards"] + (1 if member["stamps"] >= STAMP_GOAL else 0)
-    offers = fetchall("SELECT * FROM offers WHERE active=1 ORDER BY id DESC LIMIT 5")
-    return render_template("card.html", member=member, goal=STAMP_GOAL, available=available, offers=offers)
+    member = fetchone(
+        "SELECT * FROM members WHERE token=?",
+        (token,)
+    )
 
+    if not member:
+        return "Η κάρτα δεν βρέθηκε", 404
+
+    available = (
+        member["rewards"]
+        + (1 if member["stamps"] >= STAMP_GOAL else 0)
+    )
+
+    # Τρέχουσα ημερομηνία και ώρα Ελλάδας
+    now_gr = datetime.now(ZoneInfo("Europe/Athens"))
+    today = now_gr.date()
+    current_time = now_gr.time()
+
+    # Έλεγχος αν ο πελάτης είναι ενεργός
+    last_activity = fetchone(
+        """
+        SELECT created_at
+        FROM activity
+        WHERE member_id=?
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (member["id"],)
+    )
+
+    is_active = False
+
+    if last_activity and last_activity["created_at"]:
+        try:
+            activity_dt = datetime.fromisoformat(
+                str(last_activity["created_at"]).replace("Z", "+00:00")
+            )
+
+            if activity_dt.tzinfo is None:
+                activity_dt = activity_dt.replace(
+                    tzinfo=ZoneInfo("Europe/Athens")
+                )
+
+            days_since_activity = (
+                now_gr - activity_dt
+            ).days
+
+            is_active = days_since_activity <= 30
+
+        except Exception:
+            is_active = False
+
+    # Έλεγχος αν είναι Top πελάτης
+    top_members = fetchall(
+        """
+        SELECT member_code
+        FROM members
+        ORDER BY
+            (stamps + redeemed * ?) DESC,
+            redeemed DESC,
+            stamps DESC
+        LIMIT 10
+        """,
+        (STAMP_GOAL,)
+    )
+
+    top_codes = {
+        m["member_code"]
+        for m in top_members
+    }
+
+    is_top = member["member_code"] in top_codes
+
+    # Παίρνουμε όλες τις ενεργοποιημένες προσφορές
+    all_offers = fetchall(
+        """
+        SELECT *
+        FROM offers
+        WHERE active=1
+        ORDER BY id DESC
+        """
+    )
+
+    offers = []
+
+    for offer in all_offers:
+
+        # -------------------------
+        # ΗΜΕΡΟΜΗΝΙΑ ΕΝΑΡΞΗΣ
+        # -------------------------
+        if offer["start_date"]:
+            try:
+                start_date = datetime.strptime(
+                    offer["start_date"],
+                    "%Y-%m-%d"
+                ).date()
+
+                if today < start_date:
+                    continue
+
+            except ValueError:
+                pass
+
+        # -------------------------
+        # ΗΜΕΡΟΜΗΝΙΑ ΛΗΞΗΣ
+        # -------------------------
+        if offer["end_date"]:
+            try:
+                end_date = datetime.strptime(
+                    offer["end_date"],
+                    "%Y-%m-%d"
+                ).date()
+
+                if today > end_date:
+                    continue
+
+            except ValueError:
+                pass
+
+        # -------------------------
+        # ΩΡΑ ΕΝΑΡΞΗΣ
+        # -------------------------
+        if offer["start_time"]:
+            try:
+                start_time = datetime.strptime(
+                    offer["start_time"],
+                    "%H:%M"
+                ).time()
+
+                if current_time < start_time:
+                    continue
+
+            except ValueError:
+                pass
+
+        # -------------------------
+        # ΩΡΑ ΛΗΞΗΣ
+        # -------------------------
+        if offer["end_time"]:
+            try:
+                end_time = datetime.strptime(
+                    offer["end_time"],
+                    "%H:%M"
+                ).time()
+
+                if current_time > end_time:
+                    continue
+
+            except ValueError:
+                pass
+
+        # -------------------------
+        # ΟΜΑΔΑ ΠΕΛΑΤΩΝ
+        # -------------------------
+        target = offer["target_group"] or "all"
+
+        if target == "active" and not is_active:
+            continue
+
+        if target == "inactive" and is_active:
+            continue
+
+        if target == "top" and not is_top:
+            continue
+
+        offers.append(offer)
+
+        # Μέχρι 5 προσφορές στην κάρτα
+        if len(offers) >= 5:
+            break
+
+    return render_template(
+        "card.html",
+        member=member,
+        goal=STAMP_GOAL,
+        available=available,
+        offers=offers
+    )
 @app.route("/qr/<token>")
 def qr(token):
     member = fetchone("SELECT * FROM members WHERE token=?", (token,))
