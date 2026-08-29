@@ -19,8 +19,8 @@ nav{display:flex;gap:10px;align-items:center}nav a{padding:10px 12px;border-radi
 .consent{display:flex!important;align-items:flex-start;gap:9px;font-weight:500!important;color:var(--muted)}.consent input{width:auto!important;margin:2px 0 0!important}.fineprint{font-size:11px}.offers-panel{margin-top:20px;padding:24px}.offer-list{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.offer-item{background:linear-gradient(135deg,#f8ded8,#fff);border:1px solid var(--line);border-radius:18px;padding:18px}.offer-item strong,.offer-item span{display:block}.offer-item span{margin-top:7px;color:var(--muted);font-size:13px}.compact{margin:14px 0 20px}.offer-admin{display:grid;gap:8px}.offer-admin>div{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid #eee4df}.offer-admin small{display:block;color:var(--muted);margin-top:4px}.activity-panel{padding:24px;margin-top:18px}@media(max-width:850px){.offer-list{grid-template-columns:1fr}}
 /* Member card logo */
 .member-top img {
-    width: 88px;
-    height: 88px;
+    width: 105px;
+    height: 105px;
     object-fit: cover;
     border-radius: 50%;
     background: #fff;
