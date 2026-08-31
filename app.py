@@ -6,8 +6,10 @@ from zoneinfo import ZoneInfo
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 import qrcode
-
-try:
+import json
+import time
+from google.oauth2 import service_account
+from google.auth import crypt, jwttry:
     import psycopg
     from psycopg.rows import dict_row
 except Exception:
@@ -28,7 +30,9 @@ app.config.update(
 )
 STAMP_GOAL = int(os.environ.get("STAMP_GOAL", "8"))
 APP_NAME = "Lizzy’s Rewards"
-
+GOOGLE_WALLET_ISSUER_ID = os.environ.get("GOOGLE_WALLET_ISSUER_ID", "").strip()
+GOOGLE_WALLET_CLASS_ID = os.environ.get("GOOGLE_WALLET_CLASS_ID", "lizzys_rewards").strip()
+GOOGLE_WALLET_KEY_FILE = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "/etc/secrets/google-wallet-key.json").strip()
 def is_pg():
     return DATABASE_URL.startswith("postgres://") or DATABASE_URL.startswith("postgresql://")
 
@@ -431,6 +435,82 @@ def card(token):
         available=available,
         offers=offers
     )
+  @app.route("/wallet/<token>")
+def google_wallet(token):
+    member = fetchone(
+        "SELECT * FROM members WHERE token=?",
+        (token,)
+    )
+
+    if not member:
+        return "Η κάρτα δεν βρέθηκε", 404
+
+    if not GOOGLE_WALLET_ISSUER_ID:
+        return "Google Wallet Issuer ID is not configured", 500
+
+    try:
+        credentials = service_account.Credentials.from_service_account_file(
+            GOOGLE_WALLET_KEY_FILE
+        )
+
+        signer = crypt.RSASigner.from_service_account_file(
+            GOOGLE_WALLET_KEY_FILE
+        )
+
+        class_id = f"{GOOGLE_WALLET_ISSUER_ID}.{GOOGLE_WALLET_CLASS_ID}"
+
+        safe_member_id = str(member["id"]).replace("-", "_")
+        object_id = f"{GOOGLE_WALLET_ISSUER_ID}.lizzys_member_{safe_member_id}"
+
+        loyalty_object = {
+            "id": object_id,
+            "classId": class_id,
+            "state": "ACTIVE",
+            "accountId": str(member["code"]),
+            "accountName": str(member["name"]),
+            "loyaltyPoints": {
+                "label": "Σφραγίδες",
+                "balance": {
+                    "int": int(member["stamps"])
+                }
+            },
+            "barcode": {
+                "type": "QR_CODE",
+                "value": request.url_root.rstrip("/") + url_for(
+                    "card",
+                    token=token
+                ),
+                "alternateText": str(member["code"])
+            }
+        }
+
+        claims = {
+            "iss": credentials.service_account_email,
+            "aud": "google",
+            "origins": [
+                request.url_root.rstrip("/")
+            ],
+            "typ": "savetowallet",
+            "iat": int(time.time()),
+            "payload": {
+                "loyaltyObjects": [
+                    loyalty_object
+                ]
+            }
+        }
+
+        signed_jwt = jwt.encode(signer, claims)
+
+        if isinstance(signed_jwt, bytes):
+            signed_jwt = signed_jwt.decode("utf-8")
+
+        save_url = f"https://pay.google.com/gp/v/save/{signed_jwt}"
+
+        return redirect(save_url)
+
+    except Exception as e:
+        app.logger.exception("Google Wallet error")
+        return f"Google Wallet error: {str(e)}", 500
 @app.route("/qr/<token>")
 def qr(token):
     member = fetchone("SELECT * FROM members WHERE token=?", (token,))
