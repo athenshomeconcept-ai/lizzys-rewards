@@ -9,7 +9,8 @@ import qrcode
 import json
 import time
 from google.oauth2 import service_account
-from google.auth import crypt, jwttry:
+from google.auth import crypt, jwt
+try:
     import psycopg
     from psycopg.rows import dict_row
 except Exception:
