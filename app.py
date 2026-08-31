@@ -467,7 +467,7 @@ def google_wallet(token):
             "id": object_id,
             "classId": class_id,
             "state": "ACTIVE",
-            "accountId": str(member["code"]),
+            "accountId": str(member["member_code"])
             "accountName": str(member["name"]),
             "loyaltyPoints": {
                 "label": "Σφραγίδες",
@@ -481,7 +481,7 @@ def google_wallet(token):
                     "card",
                     token=token
                 ),
-                "alternateText": str(member["code"])
+                "alternateText": str(member["member_code"])
             }
         }
 
