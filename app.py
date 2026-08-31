@@ -436,7 +436,7 @@ def card(token):
         available=available,
         offers=offers
     )
-  @app.route("/wallet/<token>")
+@app.route("/wallet/<token>")
 def google_wallet(token):
     member = fetchone(
         "SELECT * FROM members WHERE token=?",
