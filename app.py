@@ -475,9 +475,7 @@ def google_wallet(token):
         claims = {
             "iss": credentials.service_account_email,
             "aud": "google",
-            "origins": [
-                request.url_root.rstrip("/")
-            ],
+            "origins": [],
             "typ": "savetowallet",
             "iat": int(time.time()),
             "payload": {
