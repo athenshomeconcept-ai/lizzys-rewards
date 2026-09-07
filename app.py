@@ -505,13 +505,14 @@ def google_wallet(token):
         if isinstance(signed_jwt, bytes):
             signed_jwt = signed_jwt.decode("utf-8")
 
-        save_url = f"https://pay.google.com/gp/v/save/{signed_jwt}"
-app.logger.info("Wallet class_id: %s", class_id)
-app.logger.info("Wallet object_id: %s", object_id)
-app.logger.info("Wallet issuer: %s", credentials.service_account_email)
-app.logger.info("Wallet origin: %s", request.url_root.rstrip("/"))
-        return redirect(save_url)
+                save_url = f"https://pay.google.com/gp/v/save/{signed_jwt}"
 
+        app.logger.info("Wallet class_id: %s", class_id)
+        app.logger.info("Wallet object_id: %s", object_id)
+        app.logger.info("Wallet issuer: %s", credentials.service_account_email)
+        app.logger.info("Wallet origin: %s", request.url_root.rstrip("/"))
+
+        return redirect(save_url)
     except Exception as e:
         app.logger.exception("Google Wallet error")
         return f"Google Wallet error: {str(e)}", 500
