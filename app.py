@@ -468,22 +468,9 @@ def google_wallet(token):
             "classId": class_id,
             "state": "ACTIVE",
             "accountId": str(member["member_code"]),
-            "accountName": str(member["name"]),
-            "loyaltyPoints": {
-                "label": "Σφραγίδες",
-                "balance": {
-                    "int": int(member["stamps"])
-                }
-            },
-            "barcode": {
-                "type": "QR_CODE",
-                "value": request.url_root.rstrip("/") + url_for(
-                    "card",
-                    token=token
-                ),
-                "alternateText": str(member["member_code"])
-            }
+            "accountName": str(member["name"])
         }
+           
 
         claims = {
             "iss": credentials.service_account_email,
