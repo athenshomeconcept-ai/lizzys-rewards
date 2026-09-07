@@ -556,7 +556,172 @@ def google_wallet(token):
     except Exception as e:
         app.logger.exception("Google Wallet error")
         return f"Google Wallet error: {str(e)}", 500
-@app.route("/qr/<token>")
+def _normalize_loyalty_phone(value):
+    digits = "".join(ch for ch in str(value or "") if ch.isdigit())
+
+    # Κρατάμε τα τελευταία 10 ψηφία
+    if len(digits) >= 10:
+        digits = digits[-10:]
+
+    return digits
+
+
+@app.route("/loyalty", methods=["GET", "POST"])
+def loyalty_lookup():
+    error = ""
+
+    if request.method == "POST":
+        phone = _normalize_loyalty_phone(
+            request.form.get("phone", "")
+        )
+
+        if len(phone) != 10:
+            error = "Γράψε σωστά το κινητό σου."
+        else:
+            members = fetchall(
+                "SELECT id, token, phone FROM members"
+            )
+
+            found = None
+
+            for m in members:
+                if _normalize_loyalty_phone(m["phone"]) == phone:
+                    found = m
+                    break
+
+            if found:
+                return redirect(
+                    url_for("card", token=found["token"])
+                )
+
+            error = "Δεν βρέθηκε κάρτα με αυτό το κινητό."
+
+    error_html = ""
+
+    if error:
+        error_html = f"""
+        <div style="
+            margin:16px 0;
+            padding:12px;
+            border-radius:12px;
+            background:#fff1f1;
+            color:#9b1c1c;
+            font-weight:700;
+        ">
+            {error}
+        </div>
+        """
+
+    return f"""
+    <!doctype html>
+    <html lang="el">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport"
+              content="width=device-width, initial-scale=1">
+
+        <title>Lizzy’s Rewards</title>
+    </head>
+
+    <body style="
+        margin:0;
+        background:#f7f7f7;
+        font-family:Arial,sans-serif;
+    ">
+
+        <main style="
+            max-width:430px;
+            margin:0 auto;
+            padding:34px 20px;
+        ">
+
+            <div style="
+                background:white;
+                border-radius:22px;
+                padding:28px 22px;
+                box-shadow:0 8px 28px rgba(0,0,0,.08);
+            ">
+
+                <h1 style="
+                    margin:0 0 8px;
+                    text-align:center;
+                    font-size:28px;
+                ">
+                    Lizzy’s Coffee & More
+                </h1>
+
+                <p style="
+                    margin:0 0 24px;
+                    text-align:center;
+                    color:#666;
+                ">
+                    Βάλε το κινητό σου για να ανοίξεις
+                    την κάρτα επιβράβευσης.
+                </p>
+
+                {error_html}
+
+                <form method="post" action="/loyalty">
+
+                    <input
+                        type="tel"
+                        name="phone"
+                        inputmode="numeric"
+                        autocomplete="tel"
+                        placeholder="69XXXXXXXX"
+                        required
+                        style="
+                            width:100%;
+                            box-sizing:border-box;
+                            padding:16px;
+                            border:1px solid #ccc;
+                            border-radius:14px;
+                            font-size:20px;
+                            text-align:center;
+                        "
+                    >
+
+                    <button
+                        type="submit"
+                        style="
+                            width:100%;
+                            margin-top:14px;
+                            padding:16px;
+                            border:0;
+                            border-radius:14px;
+                            background:#111;
+                            color:#fff;
+                            font-size:18px;
+                            font-weight:700;
+                            cursor:pointer;
+                        "
+                    >
+                        Άνοιγμα κάρτας
+                    </button>
+
+                </form>
+
+                <a
+                    href="/join"
+                    style="
+                        display:block;
+                        margin-top:14px;
+                        text-align:center;
+                        text-decoration:none;
+                        font-weight:700;
+                        color:#222;
+                    "
+                >
+                    Δεν έχεις κάρτα; Κάνε νέα εγγραφή
+                </a>
+
+            </div>
+
+        </main>
+
+    </body>
+    </html>
+    """
 def qr(token):
     member = fetchone("SELECT * FROM members WHERE token=?", (token,))
     if not member: return "Not found", 404
