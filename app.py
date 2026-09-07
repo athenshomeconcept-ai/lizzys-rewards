@@ -449,6 +449,12 @@ def google_wallet(token):
     if not GOOGLE_WALLET_ISSUER_ID:
         return "Google Wallet Issuer ID is not configured", 500
 
+    if not GOOGLE_WALLET_CLASS_ID:
+        return "Google Wallet Class ID is not configured", 500
+
+    if not os.path.exists(GOOGLE_WALLET_KEY_FILE):
+        return "Google Wallet key file not found", 500
+
     try:
         credentials = service_account.Credentials.from_service_account_file(
             GOOGLE_WALLET_KEY_FILE
@@ -458,24 +464,58 @@ def google_wallet(token):
             GOOGLE_WALLET_KEY_FILE
         )
 
+        # Πλήρες Class ID της ενεργής loyalty class
         class_id = f"{GOOGLE_WALLET_ISSUER_ID}.{GOOGLE_WALLET_CLASS_ID}"
 
+        # Μοναδικό Object ID για κάθε πελάτη
         safe_member_id = str(member["id"]).replace("-", "_")
-        object_id = f"{GOOGLE_WALLET_ISSUER_ID}.lizzys_member_{safe_member_id}"
+        object_id = (
+            f"{GOOGLE_WALLET_ISSUER_ID}."
+            f"lizzys_member_{safe_member_id}"
+        )
 
+        # Πληροφορίες κάρτας πελάτη
         loyalty_object = {
             "id": object_id,
             "classId": class_id,
             "state": "ACTIVE",
+
             "accountId": str(member["member_code"]),
-            "accountName": str(member["name"])
+            "accountName": str(member["name"]),
+
+            "loyaltyPoints": {
+                "label": "Σφραγίδες",
+                "balance": {
+                    "int": int(member["stamps"])
+                }
+            },
+
+            "barcode": {
+                "type": "QR_CODE",
+                "value": str(member["token"]),
+                "alternateText": str(member["member_code"])
+            },
+
+            "textModulesData": [
+                {
+                    "header": "Πρόοδος επιβράβευσης",
+                    "body": (
+                        f"{member['stamps']} από {STAMP_GOAL} σφραγίδες"
+                    )
+                },
+                {
+                    "header": "Κωδικός μέλους",
+                    "body": str(member["member_code"])
+                }
+            ]
         }
-           
 
         claims = {
             "iss": credentials.service_account_email,
             "aud": "google",
-            "origins": [],
+            "origins": [
+                request.url_root.rstrip("/")
+            ],
             "typ": "savetowallet",
             "iat": int(time.time()),
             "payload": {
@@ -490,14 +530,29 @@ def google_wallet(token):
         if isinstance(signed_jwt, bytes):
             signed_jwt = signed_jwt.decode("utf-8")
 
-        save_url = f"https://pay.google.com/gp/v/save/{signed_jwt}"
+        save_url = (
+            f"https://pay.google.com/gp/v/save/{signed_jwt}"
+        )
 
-        app.logger.warning("Wallet class_id: %s", class_id)
-        app.logger.warning("Wallet object_id: %s", object_id)
-        app.logger.warning("Wallet issuer: %s", credentials.service_account_email)
-        app.logger.warning("Wallet origin: %s", request.url_root.rstrip("/"))
+        app.logger.warning(
+            "Wallet class_id: %s",
+            class_id
+        )
+        app.logger.warning(
+            "Wallet object_id: %s",
+            object_id
+        )
+        app.logger.warning(
+            "Wallet issuer: %s",
+            credentials.service_account_email
+        )
+        app.logger.warning(
+            "Wallet origin: %s",
+            request.url_root.rstrip("/")
+        )
 
         return redirect(save_url)
+
     except Exception as e:
         app.logger.exception("Google Wallet error")
         return f"Google Wallet error: {str(e)}", 500
