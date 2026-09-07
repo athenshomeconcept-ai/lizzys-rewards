@@ -500,12 +500,12 @@ def google_wallet(token):
             }
         }
 
-        signed_jwt = jwt.encode(signer, claims)
+            signed_jwt = jwt.encode(signer, claims)
 
         if isinstance(signed_jwt, bytes):
             signed_jwt = signed_jwt.decode("utf-8")
 
-                save_url = f"https://pay.google.com/gp/v/save/{signed_jwt}"
+        save_url = f"https://pay.google.com/gp/v/save/{signed_jwt}"
 
         app.logger.info("Wallet class_id: %s", class_id)
         app.logger.info("Wallet object_id: %s", object_id)
