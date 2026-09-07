@@ -500,7 +500,7 @@ def google_wallet(token):
             }
         }
 
-            signed_jwt = jwt.encode(signer, claims)
+        signed_jwt = jwt.encode(signer, claims)
 
         if isinstance(signed_jwt, bytes):
             signed_jwt = signed_jwt.decode("utf-8")
