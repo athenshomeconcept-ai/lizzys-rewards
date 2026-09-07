@@ -722,6 +722,7 @@ def loyalty_lookup():
     </body>
     </html>
     """
+@app.route("/qr/<token>")
 def qr(token):
     member = fetchone("SELECT * FROM members WHERE token=?", (token,))
     if not member: return "Not found", 404
